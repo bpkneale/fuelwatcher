@@ -2,6 +2,7 @@ package com.benjamininnovations.fuelwatcher;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,17 +16,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.ListView;
 
 public class DisplayPrices extends FragmentActivity implements
 		ActionBar.TabListener {
 	
-	public static FuelDatabase fueldb;
-	public static SQLiteDatabase readable;
+	public FuelDatabase fueldb;
+	public SQLiteDatabase readable;
 	
-	private static final int SHOWCOUNT = 10;
-	private static TextView[] entries;
-
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
 	 * fragments for each of the sections. We use a
@@ -40,6 +38,8 @@ public class DisplayPrices extends FragmentActivity implements
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	ViewPager mViewPager;
+	
+	static Context context;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +49,8 @@ public class DisplayPrices extends FragmentActivity implements
 		MainApplication mainApp = (MainApplication) getApplication();
 		fueldb = mainApp.getDatabase();
 		readable = fueldb.getReadableDatabase();
+		
+		context = this;
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -180,13 +182,19 @@ public class DisplayPrices extends FragmentActivity implements
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(
 					R.layout.fragment_display_prices_dummy, container, false);
-			TextView dummyTextView = (TextView) rootView
-					.findViewById(R.id.section_label);
 			
-			entries = new TextView[SHOWCOUNT];
 			
-			dummyTextView.setText(Integer.toString(getArguments().getInt(
-					ARG_SECTION_NUMBER)));
+			ListView fuelView = (ListView) rootView.findViewById(R.id.fuelPriceList);
+			
+			
+			
+//			TextView dummyTextView = (TextView) rootView
+//					.findViewById(R.id.section_label);
+//			
+//			entries = new TextView[SHOWCOUNT];
+//			
+//			dummyTextView.setText(Integer.toString(getArguments().getInt(
+//					ARG_SECTION_NUMBER)));
 			return rootView;
 		}
 	}
