@@ -3,6 +3,7 @@ package com.benjamininnovations.fuelwatcher;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -11,6 +12,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -182,11 +184,15 @@ public class DisplayPrices extends FragmentActivity implements
 				Bundle savedInstanceState) {
 			View rootView = inflater.inflate(
 					R.layout.fragment_display_prices_dummy, container, false);
+			Context context = rootView.getContext();
 			
 			
 			ListView fuelView = (ListView) rootView.findViewById(R.id.fuelPriceList);
+			MainApplication app = (MainApplication) context.getApplicationContext();
+			Cursor cur = app.getCursor();
 			
-			
+			SimpleCursorAdapter adapt = new SimpleCursorAdapter(context, R.id.fuelPriceList, cur, null, null, 0);
+						
 			
 //			TextView dummyTextView = (TextView) rootView
 //					.findViewById(R.id.section_label);

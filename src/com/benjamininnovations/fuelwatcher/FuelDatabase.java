@@ -19,7 +19,7 @@ public class FuelDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-    	String dbCreate = "create table if not exists fuel (id integer primary key autoincrement,";
+    	String dbCreate = "create table if not exists fuel (_id integer primary key autoincrement,";
     	for(int i = 0; i < columns.length; i++)
     	{
     		if(i + 1  < columns.length)
