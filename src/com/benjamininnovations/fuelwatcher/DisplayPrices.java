@@ -42,6 +42,8 @@ public class DisplayPrices extends FragmentActivity implements
 	ViewPager mViewPager;
 	
 	static Context context;
+	
+//	private GoogleMap map;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +53,8 @@ public class DisplayPrices extends FragmentActivity implements
 		MainApplication mainApp = (MainApplication) getApplication();
 		fueldb = mainApp.getDatabase();
 		readable = fueldb.getReadableDatabase();
+		
+//		map = ((MapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 		
 		context = this;
 
@@ -147,10 +151,22 @@ public class DisplayPrices extends FragmentActivity implements
 			// getItem is called to instantiate the fragment for the given page.
 			// Return a DummySectionFragment (defined as a static inner class
 			// below) with the page number as its lone argument.
-			Fragment fragment = new DummySectionFragment();
-			Bundle args = new Bundle();
-			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER, position + 1);
-			fragment.setArguments(args);
+			Fragment fragment;
+			
+			switch(position){
+			default:
+			case 0:
+				fragment = new FuelListSectionFragment();
+				Bundle args = new Bundle();
+				args.putInt(FuelListSectionFragment.ARG_SECTION_NUMBER, position + 1);
+				fragment.setArguments(args);
+				break;
+				
+//			case 1:
+//				fragment = (Fragment) getSupportFragmentManager().findFragmentById(R.id.map);
+//				break;
+			
+			}
 			return fragment;
 		}
 
@@ -169,14 +185,14 @@ public class DisplayPrices extends FragmentActivity implements
 	 * A dummy fragment representing a section of the app, but that simply
 	 * displays dummy text.
 	 */
-	public static class DummySectionFragment extends Fragment {
+	public static class FuelListSectionFragment extends Fragment {
 		/**
 		 * The fragment argument representing the section number for this
 		 * fragment.
 		 */
 		public static final String ARG_SECTION_NUMBER = "section_number";
 
-		public DummySectionFragment() {
+		public FuelListSectionFragment() {
 		}
 
 		@Override
@@ -186,21 +202,17 @@ public class DisplayPrices extends FragmentActivity implements
 					R.layout.fragment_display_prices_dummy, container, false);
 			Context context = rootView.getContext();
 			
-			
 			ListView fuelView = (ListView) rootView.findViewById(R.id.fuelPriceList);
 			MainApplication app = (MainApplication) context.getApplicationContext();
 			Cursor cur = app.getCursor();
 			
-			SimpleCursorAdapter adapt = new SimpleCursorAdapter(context, R.id.fuelPriceList, cur, null, null, 0);
-						
+			String[] from = new String[] {"title"};
+			int[] to = new int[] {android.R.id.text1};
 			
-//			TextView dummyTextView = (TextView) rootView
-//					.findViewById(R.id.section_label);
-//			
-//			entries = new TextView[SHOWCOUNT];
-//			
-//			dummyTextView.setText(Integer.toString(getArguments().getInt(
-//					ARG_SECTION_NUMBER)));
+			SimpleCursorAdapter adapt = new SimpleCursorAdapter(context, android.R.layout.simple_list_item_1, cur, from, to, 0);
+			
+			fuelView.setAdapter(adapt);
+				
 			return rootView;
 		}
 	}

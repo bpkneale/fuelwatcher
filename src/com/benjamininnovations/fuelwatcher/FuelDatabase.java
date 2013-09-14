@@ -14,24 +14,19 @@ public class FuelDatabase extends SQLiteOpenHelper {
 
 	FuelDatabase(Context context, String[] col) {
         super(context, "data", null, VERSION);
-		columns = col;
+    	columns = col;
+        
+        SQLiteDatabase db = getWritableDatabase();
+        
+        if(db != null)
+        {
+        	createTableFromColumns(db, columns);
+        }
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-    	String dbCreate = "create table if not exists fuel (_id integer primary key autoincrement,";
-    	for(int i = 0; i < columns.length; i++)
-    	{
-    		if(i + 1  < columns.length)
-    		{
-        		dbCreate += String.format("%s not null,", columns[i]);	
-    		}
-    		else
-    		{
-    			dbCreate += String.format("%s not null)", columns[i]);
-    		}
-    	}
-        db.execSQL(dbCreate);
+    	createTableFromColumns(db, columns);
     }
 
     @Override
@@ -42,9 +37,14 @@ public class FuelDatabase extends SQLiteOpenHelper {
         onCreate(db);
     }
     
+    public void dropAll() {
+    	getWritableDatabase().execSQL("DROP TABLE IF EXISTS fuel");
+    	createTableFromColumns(getWritableDatabase(), columns);
+    }
+    
     public String[] getCheapest(int num) {
     	String[] cheaps = new String[num];
-    	Cursor cur = getCursorFromQuery(String.format("SELECT trading_name, phone, price FROM fuel ORDER BY price ASC LIMIT %d", num));
+    	Cursor cur = getCursorFromQuery(String.format("SELECT _id, title, trading_name, phone, price FROM fuel ORDER BY price ASC LIMIT %d", num));
     	for(int i = 0; i < cur.getColumnCount(); i++) {
     		cheaps[i] = cur.getString(i);
     	}    	
@@ -63,11 +63,27 @@ public class FuelDatabase extends SQLiteOpenHelper {
     	return getStringValueFromQuery("SELECT AVG(price) FROM fuel");
     }
     
-    private Cursor getCursorFromQuery(String query) {
+    public Cursor getCursorFromQuery(String query) {
     	SQLiteDatabase db = getReadableDatabase();
     	Cursor cur = db.rawQuery(query, null);
     	cur.moveToFirst();
     	return cur;
+    }
+    
+    private void createTableFromColumns(SQLiteDatabase db, String[] columns) {
+    	String dbCreate = "CREATE TABLE IF NOT EXISTS fuel (_id INTEGER PRIMARY KEY AUTOINCREMENT,";
+    	for(int i = 0; i < columns.length; i++)
+    	{
+    		if(i + 1  < columns.length)
+    		{
+        		dbCreate += String.format("%s NOT NULL,", columns[i]);	
+    		}
+    		else
+    		{
+    			dbCreate += String.format("%s NOT NULL)", columns[i]);
+    		}
+    	}
+        db.execSQL(dbCreate);
     }
     
     private String getStringValueFromQuery(String query) {

@@ -15,9 +15,9 @@ import org.xml.sax.SAXException;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.Application;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
@@ -59,19 +59,26 @@ public class MainActivity extends Activity {
         
         mainApp = (MainApplication) getApplication();
         fueldb = mainApp.getDatabase();
+        prog = (ProgressBar) findViewById(R.id.progressBar1);
+        loadingText = (TextView) findViewById(R.id.fetchingData);
+        resultsText = (TextView) findViewById(R.id.results);
 
         if(fueldb == null)
         {
-	        prog = (ProgressBar) findViewById(R.id.progressBar1);
-	        loadingText = (TextView) findViewById(R.id.fetchingData);
-	        resultsText = (TextView) findViewById(R.id.results);
-	
 	        // Start lengthy operation in a background thread
 	        new Thread(new Runnable() {
 	            public void run() {
 	                downloadAndParseRss();
 	            }
 	        }).start();
+        }
+        else
+        {
+        	new Thread(new Runnable() {
+        		public void run() {
+        			showFuelPrices();
+        		}
+        	}).start();
         }
     }
     
@@ -87,8 +94,19 @@ public class MainActivity extends Activity {
     }
     
     public void showPrices(View view) {
+    	new Thread(new Runnable() {
+    		public void run() {
+    			queryAndSwitchView();
+    		}
+    	}).start();
+    }
+    
+    private void queryAndSwitchView() {
+
+    	Cursor cur = fueldb.getCursorFromQuery("SELECT _id, title FROM fuel ORDER BY price ASC LIMIT 50");
+    	((MainApplication)getApplication()).setCursor(cur);
+    	
     	Intent intent = new Intent(this, DisplayPrices.class);
-//    	intent.putExtra(EXTRA_MESSAGE, fueldb);
     	startActivity(intent);
     }
     
@@ -96,18 +114,8 @@ public class MainActivity extends Activity {
 	private void downloadAndParseRss() {
     	
     	try {
-    		
     		// Parse the XML into a document, and then insert the item nodes
     		// into a SQL database
-    		
-//			URL rss = new URL(FUELWATCH_RSS);
-//			
-//	    	URLConnection con = rss.openConnection();
-//	    	
-//	    	rssStream = con.getInputStream();
-//	    	byte[] buf = new byte[4096];
-//	    	rssStream.read(buf, 0, buf.length);
-//	    	String rssString = new String(buf); 
 	    	
 	    	DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 	    	DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -116,7 +124,6 @@ public class MainActivity extends Activity {
 	    	doc.normalizeDocument();
 	    	
 	    	nodes = doc.getElementsByTagName("item");
-			fueldb = null;
 			
 			fetch = (TextView) findViewById(R.id.fetchingData);
 			fetch.post(new Runnable() {
@@ -146,6 +153,8 @@ public class MainActivity extends Activity {
 		    	{
 		    		fueldb = new FuelDatabase(this, columns);
 		    		
+		    		fueldb.dropAll();
+		    		
 					db = fueldb.getWritableDatabase();
 					db.beginTransaction();
 		    	}
@@ -155,31 +164,13 @@ public class MainActivity extends Activity {
 			db.setTransactionSuccessful();
 	    	db.endTransaction();
 	    	
+	    	
 	    	if(mainApp.getDatabase() == null)
 	    	{
 	    		mainApp.setDatabase(fueldb);
 	    	}
 	    	
-	    	avgPrice = fueldb.getAveragePrice();
-	    	minPrice = fueldb.getMinimumPrice();
-	    	maxPrice = fueldb.getMaximumPrice();
-	    	
-	    	// Hide the progress bar and loading text and show some info
-	    	resultsText.post(new Runnable() {
-	    		public void run() {
-	    			TextView tit = (TextView) findViewById(R.id.titleText);
-	    			Button but = (Button) findViewById(R.id.buttonShowPrices);
-	    			tit.setVisibility(View.VISIBLE);
-	    			
-		    		prog.setVisibility(View.INVISIBLE);
-	    			loadingText.setVisibility(View.INVISIBLE);
-	    			resultsText.setText(String.format("Average ULP price:\t\t\t\t%s\tc/L\n"
-	    	    	+"Minimum ULP price:\t\t\t%s\tc/L\n"
-	    	    	+"Maximum ULP price:\t\t\t%s\tc/L", avgPrice, minPrice, maxPrice));
-	    			resultsText.setVisibility(View.VISIBLE);
-	    			but.setVisibility(View.VISIBLE);
-	    		}
-	    	});
+	    	showFuelPrices();
 	    	
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -194,6 +185,30 @@ public class MainActivity extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+    }
+    
+    private void showFuelPrices() {
+
+    	avgPrice = fueldb.getAveragePrice();
+    	minPrice = fueldb.getMinimumPrice();
+    	maxPrice = fueldb.getMaximumPrice();
+    	
+    	// Hide the progress bar and loading text and show some info
+    	resultsText.post(new Runnable() {
+    		public void run() {
+    			TextView tit = (TextView) findViewById(R.id.titleText);
+    			Button but = (Button) findViewById(R.id.buttonShowPrices);
+    			tit.setVisibility(View.VISIBLE);
+    			
+	    		prog.setVisibility(View.INVISIBLE);
+    			loadingText.setVisibility(View.INVISIBLE);
+    			resultsText.setText(String.format("Average ULP price:\t\t\t\t%s\tc/L\n"
+    	    	+"Minimum ULP price:\t\t\t%s\tc/L\n"
+    	    	+"Maximum ULP price:\t\t\t%s\tc/L", avgPrice, minPrice, maxPrice));
+    			resultsText.setVisibility(View.VISIBLE);
+    			but.setVisibility(View.VISIBLE);
+    		}
+    	});
     }
     
 }
