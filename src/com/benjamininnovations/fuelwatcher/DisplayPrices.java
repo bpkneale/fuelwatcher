@@ -20,6 +20,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.google.android.gms.maps.MapFragment;
+
+
 public class DisplayPrices extends FragmentActivity implements
 		ActionBar.TabListener {
 	
@@ -41,9 +44,7 @@ public class DisplayPrices extends FragmentActivity implements
 	 */
 	ViewPager mViewPager;
 	
-	static Context context;
-	
-//	private GoogleMap map;
+	private MapFragment mMapFragment;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -54,9 +55,13 @@ public class DisplayPrices extends FragmentActivity implements
 		fueldb = mainApp.getDatabase();
 		readable = fueldb.getReadableDatabase();
 		
-//		map = ((MapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+		mMapFragment = MapFragment.newInstance();
+		 FragmentTransaction fragmentTransaction =
+		         getFragmentManager().beginTransaction();
+//		 fragmentTransaction.add(R.id.my_container, mMapFragment);
+		 fragmentTransaction.commit();
 		
-		context = this;
+//		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -162,9 +167,9 @@ public class DisplayPrices extends FragmentActivity implements
 				fragment.setArguments(args);
 				break;
 				
-//			case 1:
-//				fragment = (Fragment) getSupportFragmentManager().findFragmentById(R.id.map);
-//				break;
+			case 1:
+				fragment = new FuelMapSectionFragment();
+				break;
 			
 			}
 			return fragment;
@@ -213,6 +218,21 @@ public class DisplayPrices extends FragmentActivity implements
 			
 			fuelView.setAdapter(adapt);
 				
+			return rootView;
+		}
+	}
+	
+	public static class FuelMapSectionFragment extends Fragment {
+		
+		public FuelMapSectionFragment() {
+			
+		}
+
+		@Override
+		public View onCreateView(LayoutInflater inflater, ViewGroup container,
+				Bundle savedInstanceState) {
+			View rootView = inflater.inflate(
+					R.layout.fragment_displayprices_map, container, false);	
 			return rootView;
 		}
 	}
