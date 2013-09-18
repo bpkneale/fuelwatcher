@@ -101,6 +101,11 @@ public class MainActivity extends Activity {
     	}).start();
     }
     
+    public void showMap(View view) {
+    	Intent intent = new Intent(this, JustAMapActivity.class);
+    	startActivity(intent);
+    }
+    
     private void queryAndSwitchView() {
 
     	Cursor cur = fueldb.getCursorFromQuery("SELECT _id, title FROM fuel ORDER BY price ASC LIMIT 50");
@@ -198,6 +203,7 @@ public class MainActivity extends Activity {
     		public void run() {
     			TextView tit = (TextView) findViewById(R.id.titleText);
     			Button but = (Button) findViewById(R.id.buttonShowPrices);
+    			Button map = (Button) findViewById(R.id.buttonShowMap);
     			tit.setVisibility(View.VISIBLE);
     			
 	    		prog.setVisibility(View.INVISIBLE);
@@ -207,6 +213,7 @@ public class MainActivity extends Activity {
     	    	+"Maximum ULP price:\t\t\t%s\tc/L", avgPrice, minPrice, maxPrice));
     			resultsText.setVisibility(View.VISIBLE);
     			but.setVisibility(View.VISIBLE);
+    			map.setVisibility(View.VISIBLE);
     		}
     	});
     }

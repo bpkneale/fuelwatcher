@@ -20,7 +20,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.SupportMapFragment;
 
 
 public class DisplayPrices extends FragmentActivity implements
@@ -45,6 +47,7 @@ public class DisplayPrices extends FragmentActivity implements
 	ViewPager mViewPager;
 	
 	private MapFragment mMapFragment;
+	private GoogleMap map;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -55,13 +58,7 @@ public class DisplayPrices extends FragmentActivity implements
 		fueldb = mainApp.getDatabase();
 		readable = fueldb.getReadableDatabase();
 		
-		mMapFragment = MapFragment.newInstance();
-		 FragmentTransaction fragmentTransaction =
-		         getFragmentManager().beginTransaction();
-//		 fragmentTransaction.add(R.id.my_container, mMapFragment);
-		 fragmentTransaction.commit();
-		
-//		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
