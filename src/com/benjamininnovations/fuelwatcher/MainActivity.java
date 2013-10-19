@@ -27,6 +27,9 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 public class MainActivity extends Activity {
 		
 	public static InputStream rssStream;
@@ -51,6 +54,8 @@ public class MainActivity extends Activity {
 	private static SQLiteDatabase db;
 
 	private static final String FUELWATCH_RSS = "http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?";
+	
+	public static MarkerOptions[] mMarkerOptionsArray;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,15 +106,38 @@ public class MainActivity extends Activity {
     	}).start();
     }
     
-    public void showMap(View view) {
-    	Intent intent = new Intent(this, JustAMapActivity.class);
-    	startActivity(intent);
-    }
     
     private void queryAndSwitchView() {
+    	
+    	final String query = "SELECT _id, title, latitude, longitude FROM fuel ORDER BY price ASC LIMIT 50";
 
-    	Cursor cur = fueldb.getCursorFromQuery("SELECT _id, title FROM fuel ORDER BY price ASC LIMIT 50");
-    	((MainApplication)getApplication()).setCursor(cur);
+    	Cursor cur = fueldb.getCursorFromQuery(query);
+    	
+    	int count = cur.getCount();
+        
+        mMarkerOptionsArray = new MarkerOptions[count];
+    	
+    	for(int i = 0; i < count; i++)
+    	{
+    		String title = cur.getString(1);
+    		LatLng latlng = new LatLng(cur.getDouble(2), cur.getDouble(3));
+    		
+    		mMarkerOptionsArray[i] = new MarkerOptions();
+    		
+    		mMarkerOptionsArray[i].title(title);
+    		mMarkerOptionsArray[i].position(latlng);
+    		
+    		cur.moveToNext();
+    	}
+    	
+    	cur.close();
+    	
+    	cur = fueldb.getCursorFromQuery(query);
+
+    	MainApplication app = (MainApplication)getApplication();
+    	
+    	app.setCursor(cur);
+    	app.setMarkerOptionsArray(mMarkerOptionsArray);
     	
     	Intent intent = new Intent(this, DisplayPrices.class);
     	startActivity(intent);
@@ -203,7 +231,6 @@ public class MainActivity extends Activity {
     		public void run() {
     			TextView tit = (TextView) findViewById(R.id.titleText);
     			Button but = (Button) findViewById(R.id.buttonShowPrices);
-    			Button map = (Button) findViewById(R.id.buttonShowMap);
     			tit.setVisibility(View.VISIBLE);
     			
 	    		prog.setVisibility(View.INVISIBLE);
@@ -213,7 +240,6 @@ public class MainActivity extends Activity {
     	    	+"Maximum ULP price:\t\t\t%s\tc/L", avgPrice, minPrice, maxPrice));
     			resultsText.setVisibility(View.VISIBLE);
     			but.setVisibility(View.VISIBLE);
-    			map.setVisibility(View.VISIBLE);
     		}
     	});
     }

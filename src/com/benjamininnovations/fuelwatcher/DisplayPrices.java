@@ -4,8 +4,10 @@ import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -17,19 +19,22 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+//import com.google.android.gms.maps.MapFragment;
 
 
 public class DisplayPrices extends FragmentActivity implements
 		ActionBar.TabListener {
 	
-	public FuelDatabase fueldb;
-	public SQLiteDatabase readable;
 	
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -46,19 +51,17 @@ public class DisplayPrices extends FragmentActivity implements
 	 */
 	ViewPager mViewPager;
 	
-	private MapFragment mMapFragment;
-	private GoogleMap map;
+	private static GoogleMap mGoogleMap;
+	private static SupportMapFragment mSupportMapFragment; 
+	private static MainApplication mApplication;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_display_prices);
 		
-		MainApplication mainApp = (MainApplication) getApplication();
-		fueldb = mainApp.getDatabase();
-		readable = fueldb.getReadableDatabase();
-		
-		map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
+
+		mApplication = (MainApplication) getApplicationContext();
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -125,7 +128,9 @@ public class DisplayPrices extends FragmentActivity implements
 			FragmentTransaction fragmentTransaction) {
 		// When the given tab is selected, switch to the corresponding page in
 		// the ViewPager.
-		mViewPager.setCurrentItem(tab.getPosition());
+		int pos = tab.getPosition();
+		
+		mViewPager.setCurrentItem(pos);
 	}
 
 	@Override
@@ -143,6 +148,9 @@ public class DisplayPrices extends FragmentActivity implements
 	 * one of the sections/tabs/pages.
 	 */
 	public class SectionsPagerAdapter extends FragmentPagerAdapter {
+		
+		private final LatLng PERTH_LATLNG = new LatLng(-31.9688837, 115.9313409);
+		private final GoogleMapOptions MAP_OPTIONS = new GoogleMapOptions().camera(new CameraPosition(PERTH_LATLNG, 9, 0, 0)); 
 
 		public SectionsPagerAdapter(FragmentManager fm) {
 			super(fm);
@@ -150,26 +158,52 @@ public class DisplayPrices extends FragmentActivity implements
 
 		@Override
 		public Fragment getItem(int position) {
-			// getItem is called to instantiate the fragment for the given page.
-			// Return a DummySectionFragment (defined as a static inner class
-			// below) with the page number as its lone argument.
 			Fragment fragment;
 			
 			switch(position){
 			default:
 			case 0:
 				fragment = new FuelListSectionFragment();
-				Bundle args = new Bundle();
-				args.putInt(FuelListSectionFragment.ARG_SECTION_NUMBER, position + 1);
-				fragment.setArguments(args);
 				break;
 				
 			case 1:
-				fragment = new FuelMapSectionFragment();
+				fragment = SupportMapFragment.newInstance(MAP_OPTIONS);
+				mSupportMapFragment = (SupportMapFragment)fragment;
+				
+		        new Thread(new Runnable() {
+		            public void run() {
+		            	keepMapUpdated();
+		            }
+		        }).start();
+		        
 				break;
-			
 			}
 			return fragment;
+		}
+		
+		public void keepMapUpdated() {
+			
+			while(mGoogleMap == null)
+			{
+				SystemClock.sleep(100);
+				mGoogleMap = mSupportMapFragment.getMap();
+			}
+			
+			Handler handler = new Handler(Looper.getMainLooper());
+			
+			handler.post(new Runnable() {
+				public void run() {
+					
+					MarkerOptions[] marks = mApplication.getMarkerOptionsArray();
+					
+					int arrLen = marks.length;
+								
+					for(int i = 0; i < arrLen; i++) {
+						mGoogleMap.addMarker(marks[i]);
+					}
+				}
+			});
+			
 		}
 
 		@Override
@@ -182,6 +216,25 @@ public class DisplayPrices extends FragmentActivity implements
 			return null;
 		}
 	}
+	
+//	public static class MyFuelMap extends SupportMapFragment {
+//		
+//		@Override
+//		public View onCreateView(LayoutInflater inflater, ViewGroup container,
+//				Bundle savedInstanceState) {
+//			View view = super.onCreateView(inflater, container, savedInstanceState);
+//			map = getMap();
+//
+//			if(map != null)
+//			{
+//				LatLng target = new LatLng(115.9313409, -31.9688837);
+//				CameraPosition pos = new CameraPosition(target, 1, 0, 0);
+//				map.animateCamera(CameraUpdateFactory.newCameraPosition(pos));
+//			}			
+//			
+//			return view;
+//		}
+//	}
 
 	/**
 	 * A dummy fragment representing a section of the app, but that simply
@@ -192,8 +245,7 @@ public class DisplayPrices extends FragmentActivity implements
 		 * The fragment argument representing the section number for this
 		 * fragment.
 		 */
-		public static final String ARG_SECTION_NUMBER = "section_number";
-
+		
 		public FuelListSectionFragment() {
 		}
 
@@ -205,33 +257,34 @@ public class DisplayPrices extends FragmentActivity implements
 			Context context = rootView.getContext();
 			
 			ListView fuelView = (ListView) rootView.findViewById(R.id.fuelPriceList);
-			MainApplication app = (MainApplication) context.getApplicationContext();
-			Cursor cur = app.getCursor();
+			Cursor cursor = mApplication.getCursor();
 			
 			String[] from = new String[] {"title"};
 			int[] to = new int[] {android.R.id.text1};
 			
-			SimpleCursorAdapter adapt = new SimpleCursorAdapter(context, android.R.layout.simple_list_item_1, cur, from, to, 0);
-			
+			SimpleCursorAdapter adapt = new SimpleCursorAdapter(context, android.R.layout.simple_list_item_1, cursor, from, to, 0);
 			fuelView.setAdapter(adapt);
+			
+//			MyOnClickListener listener = new MyOnClickListener();
+//			fuelView.setOnClickListener(listener);
 				
 			return rootView;
 		}
-	}
-	
-	public static class FuelMapSectionFragment extends Fragment {
 		
-		public FuelMapSectionFragment() {
+		public void itemClick() {
 			
 		}
-
+	}
+	
+	public static class MyOnClickListener implements View.OnClickListener {
+		
+		public MyOnClickListener() {
+			
+		}
+		
 		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(
-					R.layout.fragment_displayprices_map, container, false);	
-			return rootView;
+		public void onClick(View v) {
+			
 		}
 	}
-
 }
