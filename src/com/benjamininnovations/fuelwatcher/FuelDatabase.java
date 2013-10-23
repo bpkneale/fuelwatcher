@@ -51,16 +51,16 @@ public class FuelDatabase extends SQLiteOpenHelper {
     	return cheaps;
     }
     
-    public String getMinimumPrice() {
-    	return getStringValueFromQuery("SELECT MIN(price) FROM fuel");
+    public double getMinimumPrice() {
+    	return getDoubleValueFromQuery("SELECT MIN(price) FROM fuel");
     }
     
-    public String getMaximumPrice() {
-    	return getStringValueFromQuery("SELECT MAX(price) FROM fuel");
+    public double getMaximumPrice() {
+    	return getDoubleValueFromQuery("SELECT MAX(price) FROM fuel");
     }
     
-    public String getAveragePrice() {
-    	return getStringValueFromQuery("SELECT AVG(price) FROM fuel");
+    public double getAveragePrice() {
+    	return getDoubleValueFromQuery("SELECT AVG(price) FROM fuel");
     }
     
     public Cursor getCursorFromQuery(String query) {
@@ -84,6 +84,10 @@ public class FuelDatabase extends SQLiteOpenHelper {
     		}
     	}
         db.execSQL(dbCreate);
+    }
+    
+    private double getDoubleValueFromQuery(String query) {
+    	return getCursorFromQuery(query).getDouble(0);
     }
     
     private String getStringValueFromQuery(String query) {

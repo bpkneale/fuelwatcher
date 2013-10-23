@@ -19,7 +19,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
@@ -201,6 +200,13 @@ public class DisplayPrices extends FragmentActivity implements
 					for(int i = 0; i < arrLen; i++) {
 						mGoogleMap.addMarker(marks[i]);
 					}
+					
+//					MarkerOptions userMarker = new MarkerOptions();
+//					
+//					userMarker.title("Your Location");
+//					userMarker.position(new LatLng(mApplication.mLocation.getLatitude(), mApplication.mLocation.getLongitude()));
+//					
+//					mGoogleMap.addMarker(userMarker);
 				}
 			});
 			

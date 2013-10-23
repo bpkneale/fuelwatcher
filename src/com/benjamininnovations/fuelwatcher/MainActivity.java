@@ -16,9 +16,12 @@ import org.xml.sax.SAXException;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -39,15 +42,18 @@ public class MainActivity extends Activity {
 	public static TextView fetch;
 	public static NodeList nodes;
 	
-	public static String avgPrice;
-	public static String minPrice;
-	public static String maxPrice;
+	public static double avgPrice;
+	public static double minPrice;
+	public static double maxPrice;
 	
 	public static int Index;
 	public static int Length;
 
 	public static FuelDatabase fueldb;
 	public static MainApplication mainApp;
+	
+	public static LocationManager mLocationManager;
+	private static Location mRoughLocation;
 	
 	public final static String EXTRA_MESSAGE = "com.benjamininnovations.fuelwatcher.ViewPrices";
 	
@@ -56,6 +62,10 @@ public class MainActivity extends Activity {
 	private static final String FUELWATCH_RSS = "http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?";
 	
 	public static MarkerOptions[] mMarkerOptionsArray;
+
+	public static final double MaxLongitude = 100;
+	public static final double MaxLatitude = 100;
+	public static final double NEAR_ME_BOUNDS = 0.04;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +77,11 @@ public class MainActivity extends Activity {
         prog = (ProgressBar) findViewById(R.id.progressBar1);
         loadingText = (TextView) findViewById(R.id.fetchingData);
         resultsText = (TextView) findViewById(R.id.results);
+        
+        mainApp.mLocation = mRoughLocation;
+        
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        mRoughLocation = mLocationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
 
         if(fueldb == null)
         {
@@ -101,15 +116,30 @@ public class MainActivity extends Activity {
     public void showPrices(View view) {
     	new Thread(new Runnable() {
     		public void run() {
-    			queryAndSwitchView();
+    			showPricesFromQuery("SELECT _id, title, latitude, longitude FROM fuel ORDER BY price ASC");
     		}
     	}).start();
     }
     
+    public void showNearMe(View view) {
+    	new Thread(new Runnable() {
+    		public void run() {
+    			doNearMe();
+    		}
+    	}).start();
+    }
     
-    private void queryAndSwitchView() {
+    private void doNearMe() {
+    	double lat = mRoughLocation.getLatitude();
+    	double lng = mRoughLocation.getLongitude();
     	
-    	final String query = "SELECT _id, title, latitude, longitude FROM fuel ORDER BY price ASC LIMIT 50";
+    	showPricesFromQuery(String.format("SELECT _id, title, latitude, longitude FROM fuel"
+    			+ " WHERE (latitude < %f AND latitude > %f AND longitude < %f AND longitude > %f)" +
+    			" ORDER BY price ASC", lat + NEAR_ME_BOUNDS, lat - NEAR_ME_BOUNDS,
+    			lng + NEAR_ME_BOUNDS, lng - NEAR_ME_BOUNDS));
+    }
+    
+    private void showPricesFromQuery(String query) {
 
     	Cursor cur = fueldb.getCursorFromQuery(query);
     	
@@ -231,15 +261,19 @@ public class MainActivity extends Activity {
     		public void run() {
     			TextView tit = (TextView) findViewById(R.id.titleText);
     			Button but = (Button) findViewById(R.id.buttonShowPrices);
+    			Button buto = (Button) findViewById(R.id.buttonNearMe);
     			tit.setVisibility(View.VISIBLE);
+    			//tit.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
     			
 	    		prog.setVisibility(View.INVISIBLE);
     			loadingText.setVisibility(View.INVISIBLE);
-    			resultsText.setText(String.format("Average ULP price:\t\t\t\t%s\tc/L\n"
-    	    	+"Minimum ULP price:\t\t\t%s\tc/L\n"
-    	    	+"Maximum ULP price:\t\t\t%s\tc/L", avgPrice, minPrice, maxPrice));
+    			resultsText.setText(String.format(
+    	    	"Minimum ULP price\t\t\t\t\t%.1f c/L\n\n"
+    	    	+"Average ULP price\t\t\t\t\t\t%.1f c/L\n\n"
+    	    	+"Maximum ULP price\t\t\t\t%.1f c/L", minPrice, avgPrice, maxPrice));
     			resultsText.setVisibility(View.VISIBLE);
     			but.setVisibility(View.VISIBLE);
+    			buto.setVisibility(View.VISIBLE);
     		}
     	});
     }

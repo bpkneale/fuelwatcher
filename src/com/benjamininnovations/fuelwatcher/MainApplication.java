@@ -2,6 +2,7 @@ package com.benjamininnovations.fuelwatcher;
 
 import android.app.Application;
 import android.database.Cursor;
+import android.location.Location;
 
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -10,6 +11,7 @@ public class MainApplication extends Application {
 	private static FuelDatabase fueldb;
 	private static Cursor cursor;
 	private static MarkerOptions[] mMarkerOptionsArray;
+	public Location mLocation;
 
 	public MainApplication() {
 		fueldb = null;
