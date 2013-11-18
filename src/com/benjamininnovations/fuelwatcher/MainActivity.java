@@ -73,17 +73,20 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
         mainApp = (MainApplication) getApplication();
-        fueldb = mainApp.getDatabase();
+        
         prog = (ProgressBar) findViewById(R.id.progressBar1);
         loadingText = (TextView) findViewById(R.id.fetchingData);
         resultsText = (TextView) findViewById(R.id.results);
+
+		fueldb = new FuelDatabase(this);
+		fueldb.dropOld();
         
         mainApp.mLocation = mRoughLocation;
         
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         mRoughLocation = mLocationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
 
-        if(fueldb == null)
+        if(!fueldb.hasTodaysValues())
         {
 	        // Start lengthy operation in a background thread
 	        new Thread(new Runnable() {
@@ -195,6 +198,10 @@ public class MainActivity extends Activity {
 				}
 			});
 	    	
+			db = fueldb.getWritableDatabase();
+			db.beginTransaction();
+			boolean once = true;
+	    	
 			Length = nodes.getLength();
 	    	for(Index = 0; Index < Length; Index++)
 	    	{
@@ -212,14 +219,9 @@ public class MainActivity extends Activity {
 		    		servo.put(cleanedName, content);
 		    	}
 		    	
-		    	if(fueldb == null)
-		    	{
-		    		fueldb = new FuelDatabase(this, columns);
-		    		
-		    		fueldb.dropAll();
-		    		
-					db = fueldb.getWritableDatabase();
-					db.beginTransaction();
+		    	if(once) {
+		    		fueldb.initDatabase(columns);
+		    		once = false;
 		    	}
 		    	
 			    db.insert("fuel", null, servo);

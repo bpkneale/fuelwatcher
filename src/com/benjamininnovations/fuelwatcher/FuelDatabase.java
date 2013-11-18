@@ -1,4 +1,6 @@
 package com.benjamininnovations.fuelwatcher;
+import java.util.GregorianCalendar;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -7,13 +9,17 @@ import android.util.Log;
 
 public class FuelDatabase extends SQLiteOpenHelper {
 		
-	private static int VERSION = 1;
+	private static int VERSION = 2;
 	private static final String TAG = "Yeah";
 	
 	private static String[] columns;
 
-	FuelDatabase(Context context, String[] col) {
+	FuelDatabase(Context context) {
         super(context, "data", null, VERSION);
+        columns = null;
+    }
+	
+	public void initDatabase(String[] col) {
     	columns = col;
         
         SQLiteDatabase db = getWritableDatabase();
@@ -22,11 +28,10 @@ public class FuelDatabase extends SQLiteOpenHelper {
         {
         	createTableFromColumns(db, columns);
         }
-    }
+	}
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-    	createTableFromColumns(db, columns);
     }
 
     @Override
@@ -34,7 +39,25 @@ public class FuelDatabase extends SQLiteOpenHelper {
         Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
                 + newVersion + ", which will destroy all old data");
         db.execSQL("DROP TABLE IF EXISTS fuel");
-        onCreate(db);
+    }
+    
+    public boolean hasTodaysValues() {
+    	long time = getTodaysTimestamp();
+    	Cursor cur = getCursorFromQuery(String.format("SELECT COUNT(*) FROM (SELECT _id FROM fuel WHERE _date >= %d)", time));
+    	int count = cur.getInt(0);
+    	
+    	return count > 0;
+    }
+    
+    private long getTodaysTimestamp() {
+    	long time = new GregorianCalendar().getTimeInMillis();
+    	time = time / (1000*60*60*24);
+    	return time;
+    }
+    
+    public void dropOld() {
+    	long time = getTodaysTimestamp();
+    	getWritableDatabase().execSQL(String.format("DELETE FROM fuel WHERE _date < %d", time));
     }
     
     public void dropAll() {
@@ -71,7 +94,8 @@ public class FuelDatabase extends SQLiteOpenHelper {
     }
     
     private void createTableFromColumns(SQLiteDatabase db, String[] columns) {
-    	String dbCreate = "CREATE TABLE IF NOT EXISTS fuel (_id INTEGER PRIMARY KEY AUTOINCREMENT,";
+    	String dbCreate = "CREATE TABLE IF NOT EXISTS fuel (_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+    			"_date INTEGER";
     	for(int i = 0; i < columns.length; i++)
     	{
     		if(i + 1  < columns.length)
