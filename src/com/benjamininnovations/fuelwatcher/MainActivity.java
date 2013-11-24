@@ -30,6 +30,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -62,10 +63,15 @@ public class MainActivity extends Activity {
 	private static final String FUELWATCH_RSS = "http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?";
 	
 	public static MarkerOptions[] mMarkerOptionsArray;
+	public static float[] mHueArray;
 
 	public static final double MaxLongitude = 100;
 	public static final double MaxLatitude = 100;
-	public static final double NEAR_ME_BOUNDS = 0.04;
+	public static final double NEAR_ME_BOUNDS = 0.1;
+	
+	private static final double HUE_RED = 0.0;
+	private static final double HUE_GREEN = 120.0;
+	private static final double HUE_ORANGE = 20.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,11 +103,7 @@ public class MainActivity extends Activity {
         }
         else
         {
-        	new Thread(new Runnable() {
-        		public void run() {
-        			showFuelPrices();
-        		}
-        	}).start();
+        	showFuelPrices(false);
         }
     }
     
@@ -119,7 +121,7 @@ public class MainActivity extends Activity {
     public void showPrices(View view) {
     	new Thread(new Runnable() {
     		public void run() {
-    			showPricesFromQuery("SELECT _id, title, latitude, longitude FROM fuel ORDER BY price ASC");
+    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price FROM fuel ORDER BY price ASC");
     		}
     	}).start();
     }
@@ -135,25 +137,37 @@ public class MainActivity extends Activity {
     private void doNearMe() {
     	double lat = mRoughLocation.getLatitude();
     	double lng = mRoughLocation.getLongitude();
+    	String sql = String.format("SELECT _id, title, latitude, longitude, price FROM fuel"
+	    			+ " WHERE latitude < %.9f AND latitude > %.9f AND longitude < %.9f AND longitude > %.9f" +
+	    			" ORDER BY price ASC", lat + NEAR_ME_BOUNDS, lat - NEAR_ME_BOUNDS,
+	    			lng + NEAR_ME_BOUNDS, lng - NEAR_ME_BOUNDS);
     	
-    	showPricesFromQuery(String.format("SELECT _id, title, latitude, longitude FROM fuel"
-    			+ " WHERE (latitude < %f AND latitude > %f AND longitude < %f AND longitude > %f)" +
-    			" ORDER BY price ASC", lat + NEAR_ME_BOUNDS, lat - NEAR_ME_BOUNDS,
-    			lng + NEAR_ME_BOUNDS, lng - NEAR_ME_BOUNDS));
+    	showPricesFromQuery(sql);
     }
     
     private void showPricesFromQuery(String query) {
 
     	Cursor cur = fueldb.getCursorFromQuery(query);
+    	float minPrice = 500;
+    	float maxPrice = 0;
+    	float price;
     	
     	int count = cur.getCount();
         
         mMarkerOptionsArray = new MarkerOptions[count];
+        mHueArray = new float[count];
     	
-    	for(int i = 0; i < count; i++)
-    	{
+    	for(int i = 0; i < count; i++) {
     		String title = cur.getString(1);
     		LatLng latlng = new LatLng(cur.getDouble(2), cur.getDouble(3));
+    		price = cur.getFloat(4);
+    		
+    		if(price < minPrice) {
+    			minPrice = price;
+    		}
+    		if(price > maxPrice) {
+    			maxPrice = price;
+    		}
     		
     		mMarkerOptionsArray[i] = new MarkerOptions();
     		
@@ -161,6 +175,12 @@ public class MainActivity extends Activity {
     		mMarkerOptionsArray[i].position(latlng);
     		
     		cur.moveToNext();
+    	}
+    	
+    	for(int i = 0; i < count; i++) {
+    		if(maxPrice == minPrice) {
+    			mHueArray[i] = (float)HUE_ORANGE;
+    		}
     	}
     	
     	cur.close();
@@ -199,13 +219,15 @@ public class MainActivity extends Activity {
 			});
 	    	
 			db = fueldb.getWritableDatabase();
-			db.beginTransaction();
-			boolean once = true;
+			boolean activeTransaction = false;
+			String timestamp = String.format("%d", fueldb.getTodaysTimestamp());
 	    	
 			Length = nodes.getLength();
 	    	for(Index = 0; Index < Length; Index++)
 	    	{
 		    	ContentValues servo = new ContentValues();
+		    	
+		    	servo.put("_date", timestamp);
 	    		
 		    	NodeList servonodes = nodes.item(Index).getChildNodes();
 		    	String[] columns = new String[servonodes.getLength()];
@@ -219,9 +241,13 @@ public class MainActivity extends Activity {
 		    		servo.put(cleanedName, content);
 		    	}
 		    	
-		    	if(once) {
+		    	if(!fueldb.isTableExists()) {
 		    		fueldb.initDatabase(columns);
-		    		once = false;
+		    	}
+		    	
+		    	if(!activeTransaction) {
+		    		activeTransaction = true;
+					db.beginTransaction();
 		    	}
 		    	
 			    db.insert("fuel", null, servo);
@@ -235,7 +261,7 @@ public class MainActivity extends Activity {
 	    		mainApp.setDatabase(fueldb);
 	    	}
 	    	
-	    	showFuelPrices();
+	    	showFuelPrices(true);
 	    	
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -252,14 +278,14 @@ public class MainActivity extends Activity {
 		}
     }
     
-    private void showFuelPrices() {
+    private void showFuelPrices(boolean postpone) {
 
     	avgPrice = fueldb.getAveragePrice();
     	minPrice = fueldb.getMinimumPrice();
     	maxPrice = fueldb.getMaximumPrice();
-    	
+
     	// Hide the progress bar and loading text and show some info
-    	resultsText.post(new Runnable() {
+    	Runnable uiInteraction = new Runnable() {
     		public void run() {
     			TextView tit = (TextView) findViewById(R.id.titleText);
     			Button but = (Button) findViewById(R.id.buttonShowPrices);
@@ -277,7 +303,14 @@ public class MainActivity extends Activity {
     			but.setVisibility(View.VISIBLE);
     			buto.setVisibility(View.VISIBLE);
     		}
-    	});
+    	};
+    	
+    	if(postpone) {
+    		resultsText.post(uiInteraction);
+    	}
+    	else {
+    		uiInteraction.run();
+    	}
     }
     
 }

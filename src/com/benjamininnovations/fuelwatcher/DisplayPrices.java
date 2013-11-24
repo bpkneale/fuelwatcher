@@ -193,6 +193,11 @@ public class DisplayPrices extends FragmentActivity implements
 			handler.post(new Runnable() {
 				public void run() {
 					
+					float minPrice = mApplication.getMinPrice();
+					float maxPrice = mApplication.getMaxPrice();
+					
+					
+					
 					MarkerOptions[] marks = mApplication.getMarkerOptionsArray();
 					
 					int arrLen = marks.length;

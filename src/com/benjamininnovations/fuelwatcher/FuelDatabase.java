@@ -9,7 +9,7 @@ import android.util.Log;
 
 public class FuelDatabase extends SQLiteOpenHelper {
 		
-	private static int VERSION = 2;
+	private static int VERSION = 7;
 	private static final String TAG = "Yeah";
 	
 	private static String[] columns;
@@ -42,27 +42,38 @@ public class FuelDatabase extends SQLiteOpenHelper {
     }
     
     public boolean hasTodaysValues() {
+    	if (!isTableExists()) {
+    		return false;
+    	}
     	long time = getTodaysTimestamp();
     	Cursor cur = getCursorFromQuery(String.format("SELECT COUNT(*) FROM (SELECT _id FROM fuel WHERE _date >= %d)", time));
     	int count = cur.getInt(0);
-    	
     	return count > 0;
     }
     
-    private long getTodaysTimestamp() {
+    public boolean isTableExists()
+    {
+        Cursor cursor = getCursorFromQuery("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'fuel'");
+        int count = cursor.getInt(0);
+        cursor.close();
+        return count > 0;
+    }
+    
+    public long getTodaysTimestamp() {
     	long time = new GregorianCalendar().getTimeInMillis();
     	time = time / (1000*60*60*24);
     	return time;
     }
     
     public void dropOld() {
-    	long time = getTodaysTimestamp();
-    	getWritableDatabase().execSQL(String.format("DELETE FROM fuel WHERE _date < %d", time));
+    	if(isTableExists()) {
+	    	long time = getTodaysTimestamp();
+	    	getWritableDatabase().execSQL(String.format("DELETE FROM fuel WHERE _date < %d", time));
+    	}
     }
     
     public void dropAll() {
     	getWritableDatabase().execSQL("DROP TABLE IF EXISTS fuel");
-    	createTableFromColumns(getWritableDatabase(), columns);
     }
     
     public String[] getCheapest(int num) {
@@ -93,9 +104,9 @@ public class FuelDatabase extends SQLiteOpenHelper {
     	return cur;
     }
     
-    private void createTableFromColumns(SQLiteDatabase db, String[] columns) {
+	private void createTableFromColumns(SQLiteDatabase db, String[] columns) {
     	String dbCreate = "CREATE TABLE IF NOT EXISTS fuel (_id INTEGER PRIMARY KEY AUTOINCREMENT," +
-    			"_date INTEGER";
+    			"_date INTEGER,";
     	for(int i = 0; i < columns.length; i++)
     	{
     		if(i + 1  < columns.length)

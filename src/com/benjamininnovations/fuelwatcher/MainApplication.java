@@ -11,6 +11,8 @@ public class MainApplication extends Application {
 	private static FuelDatabase fueldb;
 	private static Cursor cursor;
 	private static MarkerOptions[] mMarkerOptionsArray;
+	private static float maxPrice;
+	private static float minPrice;
 	public Location mLocation;
 
 	public MainApplication() {
@@ -39,5 +41,21 @@ public class MainApplication extends Application {
 	
 	public void setCursor(Cursor cur) {
 		cursor = cur;
+	}
+
+	public static float getMinPrice() {
+		return minPrice;
+	}
+
+	public void setMinPrice(float minPrice) {
+		MainApplication.minPrice = minPrice;
+	}
+
+	public float getMaxPrice() {
+		return maxPrice;
+	}
+
+	public void setMaxPrice(float maxPrice) {
+		MainApplication.maxPrice = maxPrice;
 	}
 }
