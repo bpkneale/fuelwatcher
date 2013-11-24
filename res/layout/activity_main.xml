@@ -46,10 +46,19 @@
         android:onClick="showPrices" />
 
     <Button
-        android:id="@+id/buttonNearMe"
+        android:id="@+id/buttonShow20Cheap"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/buttonShowPrices"
+        android:text="Show 20 Cheapest"
+        android:visibility="invisible"
+        android:onClick="show20Cheapest" />
+
+    <Button
+        android:id="@+id/buttonNearMe"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonShow20Cheap"
         android:text="Fuel Near Me"
         android:visibility="invisible"
         android:onClick="showNearMe" />

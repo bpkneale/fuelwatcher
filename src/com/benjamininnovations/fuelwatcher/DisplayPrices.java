@@ -25,6 +25,8 @@ import android.widget.ListView;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -193,16 +195,15 @@ public class DisplayPrices extends FragmentActivity implements
 			handler.post(new Runnable() {
 				public void run() {
 					
-					float minPrice = mApplication.getMinPrice();
-					float maxPrice = mApplication.getMaxPrice();
-					
-					
-					
 					MarkerOptions[] marks = mApplication.getMarkerOptionsArray();
+					float[] hues = mApplication.getHueArray();
+					BitmapDescriptor bmp;
 					
 					int arrLen = marks.length;
 								
 					for(int i = 0; i < arrLen; i++) {
+						bmp = BitmapDescriptorFactory.defaultMarker(hues[i]);
+						marks[i].icon(bmp);
 						mGoogleMap.addMarker(marks[i]);
 					}
 					

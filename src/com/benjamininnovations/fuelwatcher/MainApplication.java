@@ -11,6 +11,7 @@ public class MainApplication extends Application {
 	private static FuelDatabase fueldb;
 	private static Cursor cursor;
 	private static MarkerOptions[] mMarkerOptionsArray;
+	private static float[] mHueArray;
 	private static float maxPrice;
 	private static float minPrice;
 	public Location mLocation;
@@ -57,5 +58,13 @@ public class MainApplication extends Application {
 
 	public void setMaxPrice(float maxPrice) {
 		MainApplication.maxPrice = maxPrice;
+	}
+
+	public float[] getHueArray() {
+		return mHueArray;
+	}
+
+	public void setHueArray(float[] hueArray) {
+		mHueArray = hueArray;
 	}
 }

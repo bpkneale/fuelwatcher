@@ -126,6 +126,14 @@ public class MainActivity extends Activity {
     	}).start();
     }
     
+    public void show20Cheapest(View view) {
+    	new Thread(new Runnable() {
+    		public void run() {
+    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price FROM fuel ORDER BY price ASC LIMIT 20");
+    		}
+    	}).start();
+    }
+    
     public void showNearMe(View view) {
     	new Thread(new Runnable() {
     		public void run() {
@@ -151,11 +159,14 @@ public class MainActivity extends Activity {
     	float minPrice = 500;
     	float maxPrice = 0;
     	float price;
+    	float[] prices;
+    	float average = 0;
     	
     	int count = cur.getCount();
         
         mMarkerOptionsArray = new MarkerOptions[count];
         mHueArray = new float[count];
+    	prices = new float[count];
     	
     	for(int i = 0; i < count; i++) {
     		String title = cur.getString(1);
@@ -169,17 +180,37 @@ public class MainActivity extends Activity {
     			maxPrice = price;
     		}
     		
+    		average += price;
+    		prices[i] = price;
     		mMarkerOptionsArray[i] = new MarkerOptions();
-    		
     		mMarkerOptionsArray[i].title(title);
     		mMarkerOptionsArray[i].position(latlng);
-    		
     		cur.moveToNext();
     	}
+    	
+    	average /= count;
+    	float avgToMin = average - minPrice;
     	
     	for(int i = 0; i < count; i++) {
     		if(maxPrice == minPrice) {
     			mHueArray[i] = (float)HUE_ORANGE;
+    		}
+    		else {
+    			float hue = prices[i] - minPrice;
+    			float diff = avgToMin;
+    			float ratio = (float)HUE_GREEN / diff;
+    			
+    			hue *= ratio;
+    			hue = (hue * -1) + (float)HUE_GREEN;
+    			
+    			if(hue < HUE_RED) {
+    				hue = (float)HUE_RED;
+    			}
+    			else if(hue > HUE_GREEN) {
+    				hue = (float)HUE_GREEN;
+    			}
+    			
+    			mHueArray[i] = hue;
     		}
     	}
     	
@@ -191,6 +222,7 @@ public class MainActivity extends Activity {
     	
     	app.setCursor(cur);
     	app.setMarkerOptionsArray(mMarkerOptionsArray);
+    	app.setHueArray(mHueArray);
     	
     	Intent intent = new Intent(this, DisplayPrices.class);
     	startActivity(intent);
@@ -290,6 +322,7 @@ public class MainActivity extends Activity {
     			TextView tit = (TextView) findViewById(R.id.titleText);
     			Button but = (Button) findViewById(R.id.buttonShowPrices);
     			Button buto = (Button) findViewById(R.id.buttonNearMe);
+    			Button cheap = (Button) findViewById(R.id.buttonShow20Cheap);
     			tit.setVisibility(View.VISIBLE);
     			//tit.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
     			
@@ -302,6 +335,7 @@ public class MainActivity extends Activity {
     			resultsText.setVisibility(View.VISIBLE);
     			but.setVisibility(View.VISIBLE);
     			buto.setVisibility(View.VISIBLE);
+    			cheap.setVisibility(View.VISIBLE);
     		}
     	};
     	
