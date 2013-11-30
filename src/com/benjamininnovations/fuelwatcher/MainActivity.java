@@ -47,6 +47,10 @@ public class MainActivity extends Activity {
 	public static double minPrice;
 	public static double maxPrice;
 	
+	public static final int QUERY_LATITUDE_COLUMN = 2;
+	public static final int QUERY_LONGITUDE_COLUMN = 3;
+	public static final int QUERY_PRICE_COLUMN = 4;
+	
 	public static int Index;
 	public static int Length;
 
@@ -156,11 +160,7 @@ public class MainActivity extends Activity {
     private void showPricesFromQuery(String query) {
 
     	Cursor cur = fueldb.getCursorFromQuery(query);
-    	float minPrice = 500;
-    	float maxPrice = 0;
-    	float price;
     	float[] prices;
-    	float average = 0;
     	
     	int count = cur.getCount();
         
@@ -170,33 +170,22 @@ public class MainActivity extends Activity {
     	
     	for(int i = 0; i < count; i++) {
     		String title = cur.getString(1);
-    		LatLng latlng = new LatLng(cur.getDouble(2), cur.getDouble(3));
-    		price = cur.getFloat(4);
-    		
-    		if(price < minPrice) {
-    			minPrice = price;
-    		}
-    		if(price > maxPrice) {
-    			maxPrice = price;
-    		}
-    		
-    		average += price;
-    		prices[i] = price;
+    		LatLng latlng = new LatLng(cur.getDouble(QUERY_LATITUDE_COLUMN), cur.getDouble(QUERY_LONGITUDE_COLUMN));
+    		prices[i] = cur.getFloat(QUERY_PRICE_COLUMN);
     		mMarkerOptionsArray[i] = new MarkerOptions();
     		mMarkerOptionsArray[i].title(title);
     		mMarkerOptionsArray[i].position(latlng);
     		cur.moveToNext();
     	}
     	
-    	average /= count;
-    	float avgToMin = average - minPrice;
+    	float avgToMin = (float)(avgPrice - minPrice);
     	
     	for(int i = 0; i < count; i++) {
     		if(maxPrice == minPrice) {
     			mHueArray[i] = (float)HUE_ORANGE;
     		}
     		else {
-    			float hue = prices[i] - minPrice;
+    			float hue = prices[i] - (float)minPrice;
     			float diff = avgToMin;
     			float ratio = (float)HUE_GREEN / diff;
     			

@@ -60,8 +60,9 @@ public class FuelDatabase extends SQLiteOpenHelper {
     }
     
     public long getTodaysTimestamp() {
+    	long dayAsMillis = 1000*60*60*24;
     	long time = new GregorianCalendar().getTimeInMillis();
-    	time = time / (1000*60*60*24);
+    	time = (time + (dayAsMillis / 2)) / dayAsMillis;
     	return time;
     }
     

@@ -20,8 +20,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -50,11 +52,15 @@ public class DisplayPrices extends FragmentActivity implements
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
-	ViewPager mViewPager;
+	static ViewPager mViewPager;
 	
 	private static GoogleMap mGoogleMap;
 	private static SupportMapFragment mSupportMapFragment; 
 	private static MainApplication mApplication;
+	private static boolean mMapInUse;
+	private static CameraPosition mNewCameraPosition;
+
+	private static final String TAG = "DisplayPrices";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +69,7 @@ public class DisplayPrices extends FragmentActivity implements
 		
 
 		mApplication = (MainApplication) getApplicationContext();
+		mMapInUse = false;
 
 		// Set up the action bar.
 		final ActionBar actionBar = getActionBar();
@@ -148,10 +155,13 @@ public class DisplayPrices extends FragmentActivity implements
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
 	 * one of the sections/tabs/pages.
 	 */
-	public class SectionsPagerAdapter extends FragmentPagerAdapter {
+	public static class SectionsPagerAdapter extends FragmentPagerAdapter {
+		
+		public static final int POSITION_LIST = 0;
+		public static final int POSITION_MAP = 1;
 		
 		private final LatLng PERTH_LATLNG = new LatLng(-31.9688837, 115.9313409);
-		private final GoogleMapOptions MAP_OPTIONS = new GoogleMapOptions().camera(new CameraPosition(PERTH_LATLNG, 9, 0, 0)); 
+		private final GoogleMapOptions MAP_OPTIONS = new GoogleMapOptions().camera(new CameraPosition(PERTH_LATLNG, 9, 0, 0));
 
 		public SectionsPagerAdapter(FragmentManager fm) {
 			super(fm);
@@ -162,27 +172,33 @@ public class DisplayPrices extends FragmentActivity implements
 			Fragment fragment;
 			
 			switch(position){
-			default:
-			case 0:
-				fragment = new FuelListSectionFragment();
-				break;
-				
-			case 1:
-				fragment = SupportMapFragment.newInstance(MAP_OPTIONS);
-				mSupportMapFragment = (SupportMapFragment)fragment;
-				
-		        new Thread(new Runnable() {
-		            public void run() {
-		            	keepMapUpdated();
-		            }
-		        }).start();
-		        
-				break;
+				default:
+				case POSITION_LIST:
+					fragment = new FuelListSectionFragment();
+					break;
+					
+				case POSITION_MAP:
+					if(mSupportMapFragment == null) {
+						fragment = SupportMapFragment.newInstance(MAP_OPTIONS);
+						mSupportMapFragment = (SupportMapFragment)fragment;
+					}
+					else {
+						fragment = mSupportMapFragment;
+					}
+					mGoogleMap = null;
+					
+			        new Thread(new Runnable() {
+			            public void run() {
+			            	keepMapUpdated();
+			            }
+			        }).start();
+			        
+					break;
 			}
 			return fragment;
 		}
 		
-		public void keepMapUpdated() {
+		public static void keepMapUpdated() {
 			
 			while(mGoogleMap == null)
 			{
@@ -206,13 +222,24 @@ public class DisplayPrices extends FragmentActivity implements
 						marks[i].icon(bmp);
 						mGoogleMap.addMarker(marks[i]);
 					}
-					
-//					MarkerOptions userMarker = new MarkerOptions();
-//					
-//					userMarker.title("Your Location");
-//					userMarker.position(new LatLng(mApplication.mLocation.getLatitude(), mApplication.mLocation.getLongitude()));
-//					
-//					mGoogleMap.addMarker(userMarker);
+				}
+			});
+			
+		}
+		
+		public static void setMapFocus(CameraPosition focus) {
+			
+			while(mGoogleMap == null) {
+				SystemClock.sleep(100);
+			}
+			
+			mNewCameraPosition = focus;
+			Handler handler = new Handler(Looper.getMainLooper());
+			
+			handler.post(new Runnable() {
+				public void run() {
+					mGoogleMap.moveCamera(CameraUpdateFactory.newCameraPosition(mNewCameraPosition));
+					mViewPager.setCurrentItem(SectionsPagerAdapter.POSITION_MAP);
 				}
 			});
 			
@@ -228,25 +255,6 @@ public class DisplayPrices extends FragmentActivity implements
 			return null;
 		}
 	}
-	
-//	public static class MyFuelMap extends SupportMapFragment {
-//		
-//		@Override
-//		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-//				Bundle savedInstanceState) {
-//			View view = super.onCreateView(inflater, container, savedInstanceState);
-//			map = getMap();
-//
-//			if(map != null)
-//			{
-//				LatLng target = new LatLng(115.9313409, -31.9688837);
-//				CameraPosition pos = new CameraPosition(target, 1, 0, 0);
-//				map.animateCamera(CameraUpdateFactory.newCameraPosition(pos));
-//			}			
-//			
-//			return view;
-//		}
-//	}
 
 	/**
 	 * A dummy fragment representing a section of the app, but that simply
@@ -277,8 +285,8 @@ public class DisplayPrices extends FragmentActivity implements
 			SimpleCursorAdapter adapt = new SimpleCursorAdapter(context, android.R.layout.simple_list_item_1, cursor, from, to, 0);
 			fuelView.setAdapter(adapt);
 			
-//			MyOnClickListener listener = new MyOnClickListener();
-//			fuelView.setOnClickListener(listener);
+			MyOnClickListener listener = new MyOnClickListener();
+			fuelView.setOnItemClickListener(listener);
 				
 			return rootView;
 		}
@@ -288,15 +296,25 @@ public class DisplayPrices extends FragmentActivity implements
 		}
 	}
 	
-	public static class MyOnClickListener implements View.OnClickListener {
+	public static class MyOnClickListener implements AdapterView.OnItemClickListener {
 		
 		public MyOnClickListener() {
 			
 		}
 		
 		@Override
-		public void onClick(View v) {
+		public void onItemClick (AdapterView<?> parent, View view, int position, long id) {
+			Cursor cur = ((SimpleCursorAdapter)parent.getAdapter()).getCursor();
+			cur.move(position);
+			LatLng servo = new LatLng(cur.getDouble(MainActivity.QUERY_LATITUDE_COLUMN),
+								      cur.getDouble(MainActivity.QUERY_LONGITUDE_COLUMN)); 
+			mNewCameraPosition = new CameraPosition(servo, 12, 0, 0);
 			
+			new Thread() {
+				public void run() {
+					SectionsPagerAdapter.setMapFocus(mNewCameraPosition);
+				}
+			}.run();
 		}
 	}
 }
