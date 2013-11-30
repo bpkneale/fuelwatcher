@@ -3,6 +3,7 @@ package com.benjamininnovations.fuelwatcher;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,6 +55,8 @@ public class DisplayPrices extends FragmentActivity implements
 	 */
 	static ViewPager mViewPager;
 	
+	public static DisplayPrices mDisplayPricesThis;
+	
 	private static GoogleMap mGoogleMap;
 	private static SupportMapFragment mSupportMapFragment; 
 	private static MainApplication mApplication;
@@ -67,7 +70,7 @@ public class DisplayPrices extends FragmentActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_display_prices);
 		
-
+		mDisplayPricesThis = this;
 		mApplication = (MainApplication) getApplicationContext();
 		mMapInUse = false;
 
@@ -227,13 +230,12 @@ public class DisplayPrices extends FragmentActivity implements
 			
 		}
 		
-		public static void setMapFocus(CameraPosition focus) {
+		public static void updateCameraPosition() {
 			
 			while(mGoogleMap == null) {
 				SystemClock.sleep(100);
 			}
 			
-			mNewCameraPosition = focus;
 			Handler handler = new Handler(Looper.getMainLooper());
 			
 			handler.post(new Runnable() {
@@ -306,15 +308,18 @@ public class DisplayPrices extends FragmentActivity implements
 		public void onItemClick (AdapterView<?> parent, View view, int position, long id) {
 			Cursor cur = ((SimpleCursorAdapter)parent.getAdapter()).getCursor();
 			cur.move(position);
+			
+			// Setup where the map should point to, should the user select that option
 			LatLng servo = new LatLng(cur.getDouble(MainActivity.QUERY_LATITUDE_COLUMN),
-								      cur.getDouble(MainActivity.QUERY_LONGITUDE_COLUMN)); 
+								      cur.getDouble(MainActivity.QUERY_LONGITUDE_COLUMN));
+			String title = cur.getString(MainActivity.QUERY_TITLE_COLUMN);
+			String trading = cur.getString(MainActivity.QUERY_TRADING_NAME_COLUMN);
 			mNewCameraPosition = new CameraPosition(servo, 12, 0, 0);
 			
-			new Thread() {
-				public void run() {
-					SectionsPagerAdapter.setMapFocus(mNewCameraPosition);
-				}
-			}.run();
+	    	Intent intent = new Intent(mDisplayPricesThis, FuelListDialogActivity.class);
+	    	intent.putExtra(FuelListDialogActivity.EXTRA_TITLE, title);
+	    	intent.putExtra(FuelListDialogActivity.EXTRA_TRADING_NAME, trading);
+	    	mDisplayPricesThis.startActivity(intent);
 		}
 	}
 }

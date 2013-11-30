@@ -46,16 +46,20 @@ public class MainActivity extends Activity {
 	public static double avgPrice;
 	public static double minPrice;
 	public static double maxPrice;
-	
+
+	public static final int QUERY_TITLE_COLUMN = 1;
 	public static final int QUERY_LATITUDE_COLUMN = 2;
 	public static final int QUERY_LONGITUDE_COLUMN = 3;
 	public static final int QUERY_PRICE_COLUMN = 4;
+	public static final int QUERY_TRADING_NAME_COLUMN = 5;
 	
 	public static int Index;
 	public static int Length;
 
 	public static FuelDatabase fueldb;
 	public static MainApplication mainApp;
+	
+	private static FavDatabase mFavDatabase;
 	
 	public static LocationManager mLocationManager;
 	private static Location mRoughLocation;
@@ -89,6 +93,7 @@ public class MainActivity extends Activity {
         resultsText = (TextView) findViewById(R.id.results);
 
 		fueldb = new FuelDatabase(this);
+		mFavDatabase = new FavDatabase(this);
 		fueldb.dropOld();
         
         mainApp.mLocation = mRoughLocation;
@@ -125,7 +130,7 @@ public class MainActivity extends Activity {
     public void showPrices(View view) {
     	new Thread(new Runnable() {
     		public void run() {
-    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price FROM fuel ORDER BY price ASC");
+    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price, trading_name FROM fuel ORDER BY price ASC");
     		}
     	}).start();
     }
@@ -133,7 +138,7 @@ public class MainActivity extends Activity {
     public void show20Cheapest(View view) {
     	new Thread(new Runnable() {
     		public void run() {
-    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price FROM fuel ORDER BY price ASC LIMIT 20");
+    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price, trading_name FROM fuel ORDER BY price ASC LIMIT 20");
     		}
     	}).start();
     }
@@ -146,10 +151,32 @@ public class MainActivity extends Activity {
     	}).start();
     }
     
+    public void showFavvers(View view) {
+    	new Thread(new Runnable() {
+    		public void run() {
+    			String[] favs = mFavDatabase.getListOfFavourites();
+    			
+    			String sql = "SELECT _id, title, latitude, longitude, price, trading_name FROM fuel WHERE ";
+    			
+    			for(String f: favs) {
+    				if (f == favs[favs.length - 1]) {
+    					sql += String.format("trading_name = %s", f);
+    				}
+    				else {
+    					sql += String.format("trading_name = %s AND ", f);
+    				}
+    			}
+    			sql += " ORDER BY price ASC";
+    			
+    			showPricesFromQuery(sql);
+    		}
+    	}).start();
+    }
+    
     private void doNearMe() {
     	double lat = mRoughLocation.getLatitude();
     	double lng = mRoughLocation.getLongitude();
-    	String sql = String.format("SELECT _id, title, latitude, longitude, price FROM fuel"
+    	String sql = String.format("SELECT _id, title, latitude, longitude, price, trading_name FROM fuel"
 	    			+ " WHERE latitude < %.9f AND latitude > %.9f AND longitude < %.9f AND longitude > %.9f" +
 	    			" ORDER BY price ASC", lat + NEAR_ME_BOUNDS, lat - NEAR_ME_BOUNDS,
 	    			lng + NEAR_ME_BOUNDS, lng - NEAR_ME_BOUNDS);
@@ -312,6 +339,7 @@ public class MainActivity extends Activity {
     			Button but = (Button) findViewById(R.id.buttonShowPrices);
     			Button buto = (Button) findViewById(R.id.buttonNearMe);
     			Button cheap = (Button) findViewById(R.id.buttonShow20Cheap);
+    			Button favvers = (Button) findViewById(R.id.buttonFavourites);
     			tit.setVisibility(View.VISIBLE);
     			//tit.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
     			
@@ -325,6 +353,7 @@ public class MainActivity extends Activity {
     			but.setVisibility(View.VISIBLE);
     			buto.setVisibility(View.VISIBLE);
     			cheap.setVisibility(View.VISIBLE);
+    			favvers.setVisibility(View.VISIBLE);
     		}
     	};
     	

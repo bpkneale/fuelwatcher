@@ -63,6 +63,15 @@
         android:visibility="invisible"
         android:onClick="showNearMe" />
 
+    <Button
+        android:id="@+id/buttonFavourites"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonNearMe"
+        android:text="Favourites"
+        android:visibility="invisible"
+        android:onClick="showFavvers" />
+
     <TextView
         android:id="@+id/results"
         android:layout_width="wrap_content"

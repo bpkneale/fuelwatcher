@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Perth Fuel Prices</string>
+    <string name="app_name">Perth Fuel</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_debug">DebugActivity</string>
@@ -10,5 +10,7 @@
     <string name="title_section2">Section 2</string>
     <string name="title_section3">Section 3</string>
     <string name="title_activity_just_amap">JustAMapActivity</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_fuel_list_dialog">Placeholder</string>
 
 </resources>
