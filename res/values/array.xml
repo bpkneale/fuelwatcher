@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="product_array_entries">
+        <item>Unleaded Petrol</item>
+        <item>Premium Unleaded Petrol</item>
+        <item>Diesel</item>
+        <item>LPG</item>
+        <item>98 RON</item>
+        <item>B20 Diesel</item>
+    </string-array>
+    <string-array name="product_array_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+    <string-array name="brand_array_entries">
+        <item>All</item>
+        <item>Ampol</item>
+        <item>Better Choice</item>
+        <item>Black and White</item>
+        <item>BOC</item>
+        <item>BP</item>
+        <item>Caltex</item>
+        <item>Caltex Woolworths</item>
+        <item>Coles Express</item>
+        <item>Eagle</item>
+        <item>Gull</item>
+        <item>Independent</item>
+        <item>Kleenheat</item>
+        <item>Kwikfuel</item>
+        <item>Liberty</item>
+        <item>Peak</item>
+        <item>Shell</item>
+        <item>United</item>
+        <item>Wesco</item>
+    </string-array>
+    <string-array name="brand_array_values">
+        <item>0</item>
+        <item>2</item>
+        <item>3</item>
+        <item>21</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>19</item>
+        <item>20</item>
+        <item>24</item>
+        <item>7</item>
+        <item>15</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>13</item>
+        <item>14</item>
+        <item>23</item>
+        <item>16</item>
+    </string-array>
+</resources>

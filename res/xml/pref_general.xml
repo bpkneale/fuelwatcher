@@ -1,0 +1,39 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+	<PreferenceCategory
+	    android:title="General"
+	    android:key="pref_key_general_settings">
+	    <ListPreference
+	        android:defaultValue="1"
+	        android:key="pref_key_product"
+	        android:summary="The product to use when searching fuel prices"
+	        android:entries="@array/product_array_entries"
+	        android:entryValues="@array/product_array_values"
+	        android:title="Fuel Product" />
+	    <ListPreference
+	        android:defaultValue="0"
+	        android:key="pref_key_brand"
+	        android:summary="Filter by specific brands of fuel stations"
+	        android:entries="@array/brand_array_entries"
+	        android:entryValues="@array/brand_array_values"
+	        android:title="Brand" />
+	    <SeekBarPreference
+	        android:defaultValue="20"
+	        android:max="100"
+	        android:key="pref_key_num_cheap"
+	        android:summary="Number of fuel stations to show when the 'Cheapest Stations' button is used"
+	        android:title="Cheapest Count" />
+	</PreferenceCategory>
+	<PreferenceCategory 
+	    android:title="About"
+	    android:key="pref_key_about">
+	    <Preference
+	        android:title="Perth Fuel"
+	        android:summary="An independently developed Android application for downloading fuel prices from the government website http://www.fuelwatch.wa.gov.au"/>
+	    <Preference
+	        android:title="Author"
+	        android:summary="Ben Kneale"/>
+	    <Preference
+	        android:title="Version"
+	        android:summary="1.0" />
+	</PreferenceCategory>
+</PreferenceScreen>

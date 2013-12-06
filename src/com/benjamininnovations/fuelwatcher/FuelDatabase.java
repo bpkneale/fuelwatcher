@@ -55,6 +55,7 @@ public class FuelDatabase extends SQLiteOpenHelper {
     	long time = getTodaysTimestamp();
     	Cursor cur = getCursorFromQuery(String.format("SELECT COUNT(*) FROM (SELECT _id FROM fuel WHERE _date >= %d)", time));
     	int count = cur.getInt(0);
+    	cur.close();
     	return count > 0;
     }
     
@@ -74,6 +75,7 @@ public class FuelDatabase extends SQLiteOpenHelper {
     }
     
     public void dropOld() {
+    	Log.i(TAG, "Dropping old fuel data");
     	if(isTableExists()) {
 	    	long time = getTodaysTimestamp();
 	    	getWritableDatabase().execSQL(String.format("DELETE FROM fuel WHERE _date < %d", time));
@@ -81,16 +83,8 @@ public class FuelDatabase extends SQLiteOpenHelper {
     }
     
     public void dropAll() {
+    	Log.i(TAG, "Dropping fuel database table");
     	getWritableDatabase().execSQL("DROP TABLE IF EXISTS fuel");
-    }
-    
-    public String[] getCheapest(int num) {
-    	String[] cheaps = new String[num];
-    	Cursor cur = getCursorFromQuery(String.format("SELECT _id, title, trading_name, phone, price FROM fuel ORDER BY price ASC LIMIT %d", num));
-    	for(int i = 0; i < cur.getColumnCount(); i++) {
-    		cheaps[i] = cur.getString(i);
-    	}    	
-    	return cheaps;
     }
     
     public double getMinimumPrice() {

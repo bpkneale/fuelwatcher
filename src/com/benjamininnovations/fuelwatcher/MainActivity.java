@@ -18,6 +18,8 @@ import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
@@ -26,9 +28,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -37,7 +42,7 @@ import android.widget.Toast;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements OnClickListener {
 		
 	public static InputStream rssStream;
 	public static ProgressBar prog;
@@ -72,6 +77,21 @@ public class MainActivity extends Activity {
 	private static SQLiteDatabase db;
 
 	private static final String FUELWATCH_RSS = "http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?";
+	private static final String FUELWATCH_PRODUCT_FMT = "Product=%d";
+	private static final String FUELWATCH_BRAND_FMT = "&Brand=%d";
+	private static final String FUELWATCH_DAY_FMT = "&Day=%d";
+	private static final String[] PRODUCT_LIST = {
+		"ULP",
+		"PULP",
+		"Diesel",
+		"LPG",
+		"98 RON",
+		"B20 Diesel"
+	};
+	
+	private static int mProductValue;
+	private static int mBrandValue;
+	
 	private static final String SQL_BASE = "SELECT _id, title, latitude, longitude, price, trading_name FROM fuel ";
 	private static final String TAG = "MainActivity";
 	
@@ -82,7 +102,7 @@ public class MainActivity extends Activity {
 	public static final double MaxLatitude = 100;
 	public static final double NEAR_ME_BOUNDS = 0.1;
 	
-	private static final int mCheapCount = 20;
+	private static int mCheapCount;
 	private static final double HUE_RED = 0.0;
 	private static final double HUE_GREEN = 120.0;
 	private static final double HUE_ORANGE = 20.0;
@@ -101,12 +121,27 @@ public class MainActivity extends Activity {
 		fueldb = new FuelDatabase(this);
 		mFavDatabase = new FavDatabase(this);
 		fueldb.dropOld();
+		
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		mProductValue = Integer.parseInt(preferences.getString(SettingsActivity.PREF_KEY_PRODUCT, "1"));
+		mBrandValue = Integer.parseInt(preferences.getString(SettingsActivity.PREF_KEY_BRAND, "0"));
+//		mCheapCount = Integer.parseInt(preferences.getString(SettingsActivity.PREF_KEY_NUM_CHEAP, "20"));
+		mCheapCount = 20;
         
         mainApp.mLocation = mRoughLocation;
         
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         mRoughLocation = mLocationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-
+    }
+    
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	
+    	checkFuelUpToDate();
+    }
+    
+    private void checkFuelUpToDate() {
         if(!fueldb.hasTodaysValues())
         {
 	        // Start lengthy operation in a background thread
@@ -132,6 +167,19 @@ public class MainActivity extends Activity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+    
+    public boolean onOptionsItemSelected(MenuItem item) {
+    	// Only have settings for now...
+
+		Intent intent = new Intent(this, SettingsActivity.class);
+		startActivity(intent);
+		
+    	return true;
+    }
+
+	@Override
+	public void onClick(View view) {
+	}
     
     public void showPrices(View view) {
     	new Thread(new Runnable() {
@@ -274,11 +322,19 @@ public class MainActivity extends Activity {
     	try {
     		// Parse the XML into a document, and then insert the item nodes
     		// into a SQL database
+    		String brand = SettingsActivity.BRAND_LIST[mBrandValue];
+    		String url = FUELWATCH_RSS;
+    		url += String.format(FUELWATCH_PRODUCT_FMT, mProductValue);
+    		if(brand != null) {
+    			url += String.format(FUELWATCH_BRAND_FMT, mBrandValue);
+    		}
 	    	
+    		Log.i(TAG, "Using URL " + url);
+    		
 	    	DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 	    	DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 	    	
-	    	Document doc = dBuilder.parse(FUELWATCH_RSS);
+	    	Document doc = dBuilder.parse(url);
 	    	doc.normalizeDocument();
 	    	
 	    	nodes = doc.getElementsByTagName("item");
@@ -367,6 +423,7 @@ public class MainActivity extends Activity {
     			Button buto = (Button) findViewById(R.id.buttonNearMe);
     			Button cheap = (Button) findViewById(R.id.buttonShowCheap);
     			Button favvers = (Button) findViewById(R.id.buttonFavourites);
+    			tit.setText(String.format("%s prices for %s", PRODUCT_LIST[mProductValue-1], "today"));
     			tit.setVisibility(View.VISIBLE);
     			//tit.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
     			

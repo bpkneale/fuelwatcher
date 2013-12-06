@@ -8,7 +8,7 @@ import android.util.Log;
 
 public class FavDatabase extends SQLiteOpenHelper {
 
-	private static int VERSION = 10;
+	private static int VERSION = 11;
 	private static final String TAG = "FavDatabase";
 	
 	FavDatabase(Context context) {
@@ -70,7 +70,7 @@ public class FavDatabase extends SQLiteOpenHelper {
 	}
 	
 	private String tradingNameConversion(String trading_name) {
-		return trading_name.replace(" ", "_");
+		return trading_name;
 	}
 	
 	private void dump() {
