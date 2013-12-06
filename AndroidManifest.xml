@@ -63,7 +63,7 @@
 
         <activity
             android:name="com.benjamininnovations.fuelwatcher.FuelListDialogActivity"
-            android:theme="@android:style/Theme.Holo.Dialog"
+            android:theme="@android:style/Theme.Holo.Light.Dialog.MinWidth"
             android:parentActivityName="com.benjamininnovations.fuelwatcher.DisplayPrices$FuelListSectionFragment" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

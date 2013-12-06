@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <CheckBox
         android:id="@+id/checkbox_favourite"
@@ -10,8 +10,7 @@
         android:layout_gravity="center"
         android:button="@android:drawable/btn_star"
         android:layout_marginTop="16dp"
-        android:layout_marginLeft="4dp"
-        android:layout_marginRight="4dp"
+        android:layout_marginLeft="16dp"
         android:layout_marginBottom="4dp"
         android:textSize="20sp"
         android:text="   Favourite" />
@@ -22,8 +21,7 @@
         android:layout_gravity="center"
         android:button="@android:drawable/ic_dialog_map"
         android:layout_marginTop="16dp"
-        android:layout_marginLeft="4dp"
-        android:layout_marginRight="4dp"
+        android:layout_marginLeft="16dp"
         android:layout_marginBottom="16dp"
         android:textSize="20sp"
         android:text="   Show on map" />

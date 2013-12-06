@@ -1,5 +1,7 @@
 package com.benjamininnovations.fuelwatcher;
 import java.util.GregorianCalendar;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -9,14 +11,19 @@ import android.util.Log;
 
 public class FuelDatabase extends SQLiteOpenHelper {
 		
-	private static int VERSION = 7;
-	private static final String TAG = "Yeah";
+	private static int VERSION = 11;
+	private static final String TAG = "FuelDatabase";
+	
+	private SimpleTimeZone aest;
 	
 	private static String[] columns;
 
 	FuelDatabase(Context context) {
         super(context, "data", null, VERSION);
         columns = null;
+        
+        String[] ids = TimeZone.getAvailableIDs(8 * 60 * 60 * 1000);
+        aest = new SimpleTimeZone(8 * 60 * 60 * 1000, ids[0]);
     }
 	
 	public void initDatabase(String[] col) {
@@ -61,7 +68,7 @@ public class FuelDatabase extends SQLiteOpenHelper {
     
     public long getTodaysTimestamp() {
     	long dayAsMillis = 1000*60*60*24;
-    	long time = new GregorianCalendar().getTimeInMillis();
+    	long time = new GregorianCalendar(aest).getTimeInMillis();
     	time = (time + (dayAsMillis / 2)) / dayAsMillis;
     	return time;
     }
@@ -119,6 +126,7 @@ public class FuelDatabase extends SQLiteOpenHelper {
     			dbCreate += String.format("%s NOT NULL)", columns[i]);
     		}
     	}
+    	Log.i(TAG, String.format("Creating table from SQL: %s", dbCreate));
         db.execSQL(dbCreate);
     }
     

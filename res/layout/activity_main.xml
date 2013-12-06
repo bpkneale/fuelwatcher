@@ -41,25 +41,25 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/progressBar1"
         android:layout_alignLeft="@+id/resultsMax"
-        android:text="Show All Prices"
+        android:text="All Stations"
         android:visibility="invisible"
         android:onClick="showPrices" />
 
     <Button
-        android:id="@+id/buttonShow20Cheap"
+        android:id="@+id/buttonShowCheap"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/buttonShowPrices"
-        android:text="Show 20 Cheapest"
+        android:text="Cheapest Stations"
         android:visibility="invisible"
-        android:onClick="show20Cheapest" />
+        android:onClick="showXCheapest" />
 
     <Button
         android:id="@+id/buttonNearMe"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/buttonShow20Cheap"
-        android:text="Fuel Near Me"
+        android:layout_below="@+id/buttonShowCheap"
+        android:text="Stations Near Me"
         android:visibility="invisible"
         android:onClick="showNearMe" />
 

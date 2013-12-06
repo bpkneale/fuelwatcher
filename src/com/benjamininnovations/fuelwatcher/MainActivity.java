@@ -24,13 +24,16 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -69,6 +72,8 @@ public class MainActivity extends Activity {
 	private static SQLiteDatabase db;
 
 	private static final String FUELWATCH_RSS = "http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?";
+	private static final String SQL_BASE = "SELECT _id, title, latitude, longitude, price, trading_name FROM fuel ";
+	private static final String TAG = "MainActivity";
 	
 	public static MarkerOptions[] mMarkerOptionsArray;
 	public static float[] mHueArray;
@@ -77,6 +82,7 @@ public class MainActivity extends Activity {
 	public static final double MaxLatitude = 100;
 	public static final double NEAR_ME_BOUNDS = 0.1;
 	
+	private static final int mCheapCount = 20;
 	private static final double HUE_RED = 0.0;
 	private static final double HUE_GREEN = 120.0;
 	private static final double HUE_ORANGE = 20.0;
@@ -130,15 +136,15 @@ public class MainActivity extends Activity {
     public void showPrices(View view) {
     	new Thread(new Runnable() {
     		public void run() {
-    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price, trading_name FROM fuel ORDER BY price ASC");
+    			showPricesFromQuery(SQL_BASE + "ORDER BY price ASC");
     		}
     	}).start();
     }
     
-    public void show20Cheapest(View view) {
+    public void showXCheapest(View view) {
     	new Thread(new Runnable() {
     		public void run() {
-    			showPricesFromQuery("SELECT _id, title, latitude, longitude, price, trading_name FROM fuel ORDER BY price ASC LIMIT 20");
+    			showPricesFromQuery(String.format(SQL_BASE + "ORDER BY price ASC LIMIT %d", mCheapCount));
     		}
     	}).start();
     }
@@ -156,19 +162,34 @@ public class MainActivity extends Activity {
     		public void run() {
     			String[] favs = mFavDatabase.getListOfFavourites();
     			
-    			String sql = "SELECT _id, title, latitude, longitude, price, trading_name FROM fuel WHERE ";
-    			
-    			for(String f: favs) {
-    				if (f == favs[favs.length - 1]) {
-    					sql += String.format("trading_name = %s", f);
-    				}
-    				else {
-    					sql += String.format("trading_name = %s AND ", f);
-    				}
+    			if(favs.length > 0) {
+        			String sql = SQL_BASE + "WHERE ";
+        			for(String f: favs) {
+        				if (f == favs[favs.length - 1]) {
+        					sql += String.format("trading_name = \"%s\"", f);
+        				}
+        				else {
+        					sql += String.format("trading_name = \"%s\" OR ", f);
+        				}
+        			}
+        			sql += " ORDER BY price ASC";
+        			
+        			showPricesFromQuery(sql);
+    			} else {
+
+    				Handler handler = new Handler(Looper.getMainLooper());
+    				
+    				handler.post(new Runnable () {
+    					public void run() {
+    	    				Context context = getApplicationContext();
+    	    				CharSequence text = "No favourites to show...";
+    	    				int duration = Toast.LENGTH_SHORT;
+
+    	    				Toast toast = Toast.makeText(context, text, duration);
+    	    				toast.show();
+    					}
+    				});
     			}
-    			sql += " ORDER BY price ASC";
-    			
-    			showPricesFromQuery(sql);
     		}
     	}).start();
     }
@@ -176,20 +197,23 @@ public class MainActivity extends Activity {
     private void doNearMe() {
     	double lat = mRoughLocation.getLatitude();
     	double lng = mRoughLocation.getLongitude();
-    	String sql = String.format("SELECT _id, title, latitude, longitude, price, trading_name FROM fuel"
-	    			+ " WHERE latitude < %.9f AND latitude > %.9f AND longitude < %.9f AND longitude > %.9f" +
-	    			" ORDER BY price ASC", lat + NEAR_ME_BOUNDS, lat - NEAR_ME_BOUNDS,
-	    			lng + NEAR_ME_BOUNDS, lng - NEAR_ME_BOUNDS);
+    	String sql = String.format(SQL_BASE + "WHERE latitude < %.9f AND latitude > %.9f" +
+					    		   " AND longitude < %.9f AND longitude > %.9f" +
+						    	   " ORDER BY price ASC",
+						    	   lat + NEAR_ME_BOUNDS, lat - NEAR_ME_BOUNDS,
+						    	   lng + NEAR_ME_BOUNDS, lng - NEAR_ME_BOUNDS);
     	
     	showPricesFromQuery(sql);
     }
     
     private void showPricesFromQuery(String query) {
-
+    	
     	Cursor cur = fueldb.getCursorFromQuery(query);
     	float[] prices;
     	
     	int count = cur.getCount();
+
+    	Log.i(TAG, String.format("SQL Query: %s\nReturned %d results", query, count));
         
         mMarkerOptionsArray = new MarkerOptions[count];
         mHueArray = new float[count];
@@ -286,6 +310,9 @@ public class MainActivity extends Activity {
 		    		String cleanedName =  item.getNodeName().replace("-", "_");
 		    		String content = item.getTextContent();
 		    		columns[j] = cleanedName;
+		    		if (cleanedName.equals("longitude") || cleanedName.equals("latitude")) {
+		    			columns[j] += " REAL";
+		    		}
 		    		servo.put(cleanedName, content);
 		    	}
 		    	
@@ -338,7 +365,7 @@ public class MainActivity extends Activity {
     			TextView tit = (TextView) findViewById(R.id.titleText);
     			Button but = (Button) findViewById(R.id.buttonShowPrices);
     			Button buto = (Button) findViewById(R.id.buttonNearMe);
-    			Button cheap = (Button) findViewById(R.id.buttonShow20Cheap);
+    			Button cheap = (Button) findViewById(R.id.buttonShowCheap);
     			Button favvers = (Button) findViewById(R.id.buttonFavourites);
     			tit.setVisibility(View.VISIBLE);
     			//tit.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);

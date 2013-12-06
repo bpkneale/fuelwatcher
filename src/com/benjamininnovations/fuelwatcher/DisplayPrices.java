@@ -16,6 +16,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -178,6 +179,7 @@ public class DisplayPrices extends FragmentActivity implements
 				default:
 				case POSITION_LIST:
 					fragment = new FuelListSectionFragment();
+//					fragment = FuelListFragment.newInstance(mApplication.getCursor());
 					break;
 					
 				case POSITION_MAP:
@@ -306,8 +308,10 @@ public class DisplayPrices extends FragmentActivity implements
 		
 		@Override
 		public void onItemClick (AdapterView<?> parent, View view, int position, long id) {
+			Log.i(DisplayPrices.TAG, String.format("OnItemClick: pos %d, id %d.", position, id));
+			
 			Cursor cur = ((SimpleCursorAdapter)parent.getAdapter()).getCursor();
-			cur.move(position);
+			cur.moveToPosition(position);
 			
 			// Setup where the map should point to, should the user select that option
 			LatLng servo = new LatLng(cur.getDouble(MainActivity.QUERY_LATITUDE_COLUMN),
