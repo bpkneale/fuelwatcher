@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="action_list">
+        <item>Today</item>
+        <item>Tomorrow</item>
+    </string-array>
     <string-array name="product_array_entries">
         <item>Unleaded Petrol</item>
         <item>Premium Unleaded Petrol</item>
@@ -11,13 +15,12 @@
     <string-array name="product_array_values">
         <item>1</item>
         <item>2</item>
-        <item>3</item>
         <item>4</item>
         <item>5</item>
         <item>6</item>
+        <item>7</item>
     </string-array>
     <string-array name="brand_array_entries">
-        <item>All</item>
         <item>Ampol</item>
         <item>Better Choice</item>
         <item>Black and White</item>
@@ -38,7 +41,6 @@
         <item>Wesco</item>
     </string-array>
     <string-array name="brand_array_values">
-        <item>0</item>
         <item>2</item>
         <item>3</item>
         <item>21</item>

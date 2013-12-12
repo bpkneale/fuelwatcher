@@ -11,8 +11,11 @@ import android.util.Log;
 
 public class FuelDatabase extends SQLiteOpenHelper {
 		
-	private static int VERSION = 11;
+	private static int VERSION = 12;
 	private static final String TAG = "FuelDatabase";
+	
+	public static final int DAY_TODAY = 0;
+	public static final int DAY_TOMORROW = 1;
 	
 	private SimpleTimeZone aest;
 	
@@ -59,6 +62,13 @@ public class FuelDatabase extends SQLiteOpenHelper {
     	return count > 0;
     }
     
+    public boolean hasTomorrowsPirces() {
+    	if (!hasTodaysValues()) {
+    		return false;
+    	}
+    	return !getStringValueFromQuery("SELECT MAX(tmr_price) FROM fuel").equals("0");
+    }
+    
     public boolean isTableExists()
     {
         Cursor cursor = getCursorFromQuery("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'fuel'");
@@ -88,15 +98,48 @@ public class FuelDatabase extends SQLiteOpenHelper {
     }
     
     public double getMinimumPrice() {
-    	return getDoubleValueFromQuery("SELECT MIN(price) FROM fuel");
+    	return getMinimumPrice(DAY_TODAY);
+    }
+    
+    public double getMinimumPrice(int day) {
+    	switch(day) { 
+		default:
+    	case DAY_TODAY:
+    		return getDoubleValueFromQuery("SELECT MIN(price) FROM fuel");
+    	
+    	case DAY_TOMORROW:
+    		return getDoubleValueFromQuery("SELECT MIN(tmr_price) FROM fuel");
+    	}
     }
     
     public double getMaximumPrice() {
-    	return getDoubleValueFromQuery("SELECT MAX(price) FROM fuel");
+    	return getMaximumPrice(DAY_TODAY);
+    }
+    
+    public double getMaximumPrice(int day) {
+    	switch(day) { 
+		default:
+    	case DAY_TODAY:
+    		return getDoubleValueFromQuery("SELECT MAX(price) FROM fuel");
+    	
+    	case DAY_TOMORROW:
+    		return getDoubleValueFromQuery("SELECT MAX(tmr_price) FROM fuel");
+    	}
     }
     
     public double getAveragePrice() {
-    	return getDoubleValueFromQuery("SELECT AVG(price) FROM fuel");
+    	return getAveragePrice(DAY_TODAY);
+    }
+    
+    public double getAveragePrice(int day) {
+    	switch(day) { 
+		default:
+    	case DAY_TODAY:
+    		return getDoubleValueFromQuery("SELECT AVG(price) FROM fuel");
+    	
+    	case DAY_TOMORROW:
+    		return getDoubleValueFromQuery("SELECT AVG(tmr_price) FROM fuel");
+    	}
     }
     
     public Cursor getCursorFromQuery(String query) {
